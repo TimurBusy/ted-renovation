@@ -1,0 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {estimateProject,buildBrief} from '../dist/calculator.mjs';
+test('all supported combinations and boundaries',()=>{for(const object of ['flat','house','commercial'])for(const scope of ['refresh','capital','turnkey','design'])for(const design of ['none','own','ted'])for(const area of [20,72,500]){const p={object,scope,design,area},e=estimateProject(p);assert.equal(e.manual,object!=='flat');if(!e.manual){assert.ok(e.low>0&&e.high>=e.low);if(scope==='design'||design!=='ted')assert.deepEqual(e.extra,[0,0]);}assert.ok(buildBrief(p).includes('TED.renovation'));}for(const area of [0,19,501,NaN,72.5])assert.throws(()=>estimateProject({object:'flat',scope:'turnkey',area}));});
+test('60m2: own designer excluded, TED added exactly once',()=>{const p={object:'flat',scope:'turnkey',area:60};assert.equal(estimateProject({...p,design:'own'}).low,2400000);assert.equal(estimateProject({...p,design:'ted'}).low,2820000);assert.equal(estimateProject({...p,scope:'design',design:'ted'}).low,420000);assert.match(buildBrief({...p,design:'own'}),/оплачиваются отдельно/);});

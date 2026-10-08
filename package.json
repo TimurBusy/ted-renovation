@@ -1,0 +1,1 @@
+{"name":"ted-renovation","private":true,"type":"module","scripts":{"start":"node scripts/serve.mjs","dev":"node scripts/serve.mjs","test":"node --test tests/calculator.test.mjs"}}
