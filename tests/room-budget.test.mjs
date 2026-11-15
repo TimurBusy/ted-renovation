@@ -1,0 +1,8 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {initialProject,validate,specification} from '../dist/room-model.mjs';
+import {applyProduct} from '../dist/room-products.mjs';
+import {budgetSummary,budgetRows} from '../dist/room-budget.mjs';
+test('budget distinguishes missing and zero and prices exact pack counts',()=>{const p=initialProject();p.floor=applyProduct(p.floor,'quickstep-im1848','floor');let b=budgetSummary(p);assert.equal(b.total,0);assert.equal(b.missing,b.rows.length);const floor=b.rows.find(r=>r.name.startsWith('Пол —'));assert.equal(floor.quantity,12);p.budget={prices:{[floor.id]:10000,'work:floor:laminate':1500,'work:other':0}};b=budgetSummary(p);assert.equal(b.total,150000);assert.equal(b.materials,120000);assert.equal(b.work,30000);assert.equal(b.missing,b.rows.length-3);p.materialPlan={reserve:30};assert.equal(budgetSummary(p).materials,150000);});
+test('material substitution does not inherit old price; work has no waste markup',()=>{const p=initialProject();const floor=budgetRows(p).find(r=>r.name.startsWith('Пол —'));p.budget={prices:{[floor.id]:1000}};p.floor.color='#000000';assert.equal(budgetSummary(p).total,0);p.materialPlan={reserve:30};assert.equal(budgetRows(p).find(r=>r.id==='work:floor:laminate').quantity,20);});
+test('budget persists in specification and rejects unsafe numeric imports',()=>{const p=initialProject();for(const price of [-1,NaN,Infinity,'100',1e10]){p.budget={prices:{x:price}};assert.throws(()=>validate(p));}p.budget={prices:{'work:other':25000}};assert.deepEqual(validate(JSON.parse(JSON.stringify(p))),p);assert.match(specification(p),/ПРЕДВАРИТЕЛЬНЫЙ БЮДЖЕТ/);assert.match(specification(p),/Не оценено позиций/);});
